@@ -72,8 +72,8 @@ jobs:
       - name: Upload firmware artifact
         uses: actions/upload-artifact@v4
         with:
-          name: tasmota-ld2410-mqtt-tls-esp8266
+          name: tasmota-ld2410-mqtt-tls-esp8266-4m
           path: |
-            docker-tasmota/Tasmota/build_output/firmware/tasmota.bin
-            docker-tasmota/Tasmota/build_output/firmware/tasmota.bin.gz
+            docker-tasmota/Tasmota/build_output/firmware/tasmota-4M.bin
+            docker-tasmota/Tasmota/build_output/firmware/tasmota-4M.bin.gz
             docker-tasmota/docker-tasmota.log
