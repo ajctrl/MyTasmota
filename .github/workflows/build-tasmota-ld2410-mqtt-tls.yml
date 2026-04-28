@@ -58,12 +58,12 @@ jobs:
         working-directory: docker-tasmota
         run: cat Tasmota/tasmota/user_config_override.h
 
-      - name: Build Tasmota stable for ESP8266
+      - name: Build Tasmota 4M stable for ESP8266
         working-directory: docker-tasmota
         env:
           USE_STABLE: "1"
           USE_TEE: "1"
-        run: ./compile.sh tasmota
+        run: ./compile.sh tasmota-4M
 
       - name: List firmware
         working-directory: docker-tasmota
