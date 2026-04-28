@@ -1,0 +1,50 @@
+name: Build Tasmota LD2410 for ESP8266
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone docker-tasmota
+        run: git clone https://github.com/tasmota/docker-tasmota.git docker-tasmota
+
+      - name: Create user_config_override.h
+        working-directory: docker-tasmota
+        run: |
+          cat > user_config_override.h <<'EOF'
+          #ifndef _USER_CONFIG_OVERRIDE_H_
+          #define _USER_CONFIG_OVERRIDE_H_
+
+          #warning **** Custom Tasmota build: USE_LD2410 enabled ****
+
+          #ifndef USE_LD2410
+          #define USE_LD2410
+          #endif
+
+          #endif
+          EOF
+
+      - name: Build Tasmota stable for ESP8266
+        working-directory: docker-tasmota
+        env:
+          USE_STABLE: "1"
+          USE_TEE: "1"
+        run: |
+          git clone https://github.com/arendst/Tasmota.git --branch development
+          ./compile.sh tasmota
+
+      - name: List firmware
+        working-directory: docker-tasmota
+        run: ls -lh Tasmota/build_output/firmware/
+
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tasmota-ld2410-esp8266
+          path: |
+            docker-tasmota/Tasmota/build_output/firmware/tasmota.bin
+            docker-tasmota/Tasmota/build_output/firmware/tasmota.bin.gz
+            docker-tasmota/docker-tasmota.log
