@@ -1,0 +1,79 @@
+name: Build Tasmota LD2410 MQTT TLS for ESP8266
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/build-tasmota-ld2410-mqtt-tls.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone docker-tasmota
+        run: git clone https://github.com/tasmota/docker-tasmota.git docker-tasmota
+
+      - name: Clone Tasmota source
+        working-directory: docker-tasmota
+        run: git clone --branch development https://github.com/arendst/Tasmota.git Tasmota
+
+      - name: Create user_config_override.h
+        working-directory: docker-tasmota
+        run: |
+          cat > Tasmota/tasmota/user_config_override.h <<'EOF'
+          #ifndef _USER_CONFIG_OVERRIDE_H_
+          #define _USER_CONFIG_OVERRIDE_H_
+
+          #warning **** Custom Tasmota build: LD2410 + MQTT TLS for ESP8266 ****
+
+          // HLK-LD2410 / LD2410B / LD2410C support
+          #ifndef USE_LD2410
+          #define USE_LD2410
+          #endif
+
+          // MQTT over TLS support for port 8883
+          #ifndef USE_MQTT_TLS
+          #define USE_MQTT_TLS
+          #endif
+
+          // Enable MQTT TLS by default
+          #ifndef MQTT_TLS_ENABLED
+          #define MQTT_TLS_ENABLED true
+          #endif
+
+          // Default MQTT TLS port
+          #undef MQTT_PORT
+          #define MQTT_PORT 8883
+
+          // CA certificate validation support
+          #ifndef USE_MQTT_TLS_CA_CERT
+          #define USE_MQTT_TLS_CA_CERT
+          #endif
+
+          #endif
+          EOF
+
+      - name: Show custom config
+        working-directory: docker-tasmota
+        run: cat Tasmota/tasmota/user_config_override.h
+
+      - name: Build Tasmota stable for ESP8266
+        working-directory: docker-tasmota
+        env:
+          USE_STABLE: "1"
+          USE_TEE: "1"
+        run: ./compile.sh tasmota
+
+      - name: List firmware
+        working-directory: docker-tasmota
+        run: ls -lh Tasmota/build_output/firmware/
+
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tasmota-ld2410-mqtt-tls-esp8266
+          path: |
+            docker-tasmota/Tasmota/build_output/firmware/tasmota.bin
+            docker-tasmota/Tasmota/build_output/firmware/tasmota.bin.gz
+            docker-tasmota/docker-tasmota.log
